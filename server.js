@@ -1,92 +1,117 @@
+require('dotenv').config();
 const express = require('express');
+const axios = require('axios');
 const app = express();
 
 app.use(express.json());
 
-function getBotResponse(user_message) {
-    const msg = user_message.trim().toLowerCase();
+const TOKEN = process.env.ACCESS_TOKEN;
+const PHONE_ID = process.env.PHONE_NUMBER_ID;
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+
+// ── Chatbot Logic ──────────────────────────────
+function getBotResponse(message) {
+    const msg = message.trim().toLowerCase();
 
     if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
-        return 'Hello! Welcome to CliEvi.com! We provide Clinical and Evidence-Based Research Services. How can I help you today?';
-
-    } else if (msg.includes('about') || msg.includes('who are you') || msg.includes('what is clievi')) {
-        return 'CliEvi is a trusted partner in Evidence-Based Insights, Analytics, and Clinical Research Excellence. We have completed 500+ projects in 30+ countries with 5+ years of expertise!';
-
-    } else if (msg.includes('service') || msg.includes('what do you offer') || msg.includes('what do you do')) {
-        return 'We offer: 1) Real-World Evidence (RWE) & HEOR 2) Clinical Research Services 3) Medical Writing 4) Statistical Analysis 5) Global Data Services. Type any service name to know more!';
-
-    } else if (msg.includes('rwe') || msg.includes('real world') || msg.includes('heor')) {
-        return 'Our RWE & HEOR Services include: RWE Patient Data Analysis, Evidence Synthesis, Electronic Records Analyses, Health Economic Outcomes Research, and Health Technology Assessments. Visit: clievi.com/services/rwd.html';
-
-    } else if (msg.includes('clinical research') || msg.includes('clinical trial') || msg.includes('clinical study')) {
-        return 'Our Clinical Research Services include: Clinical Study Reports (CSR), Regulatory Writing, Clinical Trial Support, Epidemiology Analysis, and Systematic Reviews. Visit: clievi.com/services/clinical-research-services.html';
-
-    } else if (msg.includes('medical writing') || msg.includes('manuscript') || msg.includes('writing')) {
-        return 'Our Medical Writing Services include: Manuscript Services, Customized Literature Search, PROSPERO Registration, Search Strategy Formulation, PICO Framework Assistance, and Proofreading. Visit: clievi.com/services/medical-writing-and-research-support.html';
-
-    } else if (msg.includes('statistical') || msg.includes('statistics') || msg.includes('analysis') || msg.includes('meta analysis')) {
-        return 'Our Statistical Services include: Meta-analysis, Network Meta-analysis, Longitudinal Data Analysis, Statistical Model Building (Linear, Logistic, Survival), and Randomized Controlled Trials Analysis. Visit: clievi.com/services/analytical-methods.html';
-
-    } else if (msg.includes('systematic review') || msg.includes('literature review')) {
-        return 'We provide comprehensive Systematic Literature Review Services including Literature Screening, Data Extraction, Meta-analysis, and Global Value Dossier (GVD). Visit: clievi.com/services/rwe-and-heor-services.html';
-
-    } else if (msg.includes('regulatory') || msg.includes('csr') || msg.includes('report')) {
-        return 'Our Regulatory Writing Services cover Clinical Study Reports (CSR), Regulatory Submissions, and ICH E3 compliant documentation. Visit: clievi.com/services/clinical-research-services/regulatory-writing.html';
-
-    } else if (msg.includes('cdisc') || msg.includes('send')) {
-        return 'We provide CDISC SEND (Standard for Exchange of Nonclinical Data) services for FDA and PMDA regulatory submissions. Visit: clievi.com/services/clinical-and-epidemiological-analysis/cdisc-standard-for-exchange-of-nonclinical-data-send.html';
-
-    } else if (msg.includes('gbd') || msg.includes('global burden') || msg.includes('disease burden')) {
-        return 'Our GBD (Global Burden of Disease) services help quantify morbidity, mortality, and risk factors worldwide for evidence-based health policy. Visit: clievi.com/services/global-and-country-specific-data-services/gbd-global-burden-of-disease.html';
-
-    } else if (msg.includes('trinetx') || msg.includes('nfhs') || msg.includes('who database') || msg.includes('global data')) {
-        return 'We provide Global Data Services including TriNetX, NFHS, WHO Database, CNNS Survey, and Country-Specific Database analysis. Visit: clievi.com/services/global-and-country-specific-data-services/gbd-global-burden-of-disease.html';
-
-    } else if (msg.includes('price') || msg.includes('cost') || msg.includes('quote') || msg.includes('how much')) {
-        return 'For pricing and customized quotes, please contact us directly. Email: help@clievi.com | WhatsApp: +44-772-183-3232. Our team will get back to you shortly!';
-
-    } else if (msg.includes('contact') || msg.includes('reach') || msg.includes('email') || msg.includes('phone')) {
-        return 'Contact CliEvi: Email: help@clievi.com | WhatsApp: +44-772-183-3232 | Address: 9, Prescot St, London, United Kingdom. Available 24/7!';
-
-    } else if (msg.includes('whatsapp')) {
-        return 'You can reach us on WhatsApp at +44-772-183-3232. We are available 24/7 to assist you!';
-
+        return 'Hello! Welcome to CliEvi! 👋\n\nWe provide Clinical and Evidence-Based Research Services.\n\nType *services* to know more!';
+    } else if (msg.includes('service') || msg.includes('what do you offer')) {
+        return 'Our Services:\n\n1️⃣ Real-World Evidence (RWE)\n2️⃣ Clinical Research\n3️⃣ Medical Writing\n4️⃣ Statistical Analysis\n5️⃣ Global Data Services\n\nType any service name to know more!';
+    } else if (msg.includes('rwe') || msg.includes('real world')) {
+        return '🔬 *RWE & HEOR Services:*\n\n✅ RWE Patient Data Analysis\n✅ Evidence Synthesis\n✅ Electronic Records Analysis\n✅ Health Economic Outcomes Research\n✅ Health Technology Assessments\n\nVisit: clievi.com/services/rwd.html';
+    } else if (msg.includes('clinical') || msg.includes('trial')) {
+        return '🏥 *Clinical Research Services:*\n\n✅ Clinical Study Reports\n✅ Regulatory Writing\n✅ Clinical Trial Support\n✅ Systematic Reviews\n\nVisit: clievi.com/services/clinical-research-services.html';
+    } else if (msg.includes('medical writing') || msg.includes('manuscript')) {
+        return '✍️ *Medical Writing Services:*\n\n✅ Manuscript Services\n✅ Literature Search\n✅ PROSPERO Registration\n✅ PICO Framework\n✅ Proofreading\n\nVisit: clievi.com/services/medical-writing-and-research-support.html';
+    } else if (msg.includes('statistic') || msg.includes('analysis') || msg.includes('meta')) {
+        return '📊 *Statistical Services:*\n\n✅ Meta-analysis\n✅ Network Meta-analysis\n✅ Longitudinal Data Analysis\n✅ Statistical Model Building\n✅ RCT Analysis\n\nVisit: clievi.com/services/analytical-methods.html';
+    } else if (msg.includes('price') || msg.includes('cost') || msg.includes('quote')) {
+        return '💰 *Pricing:*\n\nFor customized quotes, please contact us:\n\n📧 Email: help@clievi.com\n📞 WhatsApp: +44-772-183-3232\n\nOur team will get back to you shortly!';
+    } else if (msg.includes('contact') || msg.includes('email') || msg.includes('phone')) {
+        return '📞 *Contact CliEvi:*\n\n📧 Email: help@clievi.com\n📞 WhatsApp: +44-772-183-3232\n📍 Address: 9, Prescot St, London, UK\n\nAvailable 24/7!';
     } else if (msg.includes('location') || msg.includes('address') || msg.includes('where')) {
-        return 'CliEvi is located at: 9, Prescot St, London, United Kingdom. We serve clients in 30+ countries worldwide!';
-
-    } else if (msg.includes('career') || msg.includes('job') || msg.includes('work') || msg.includes('hiring')) {
-        return 'Interested in joining CliEvi? Visit our careers page: clievi.com/career.html for current opportunities!';
-
-    } else if (msg.includes('progress') || msg.includes('achievement') || msg.includes('stats')) {
-        return 'CliEvi Achievements: 500+ Projects Delivered | 30+ Countries Served | 5+ Years of Expertise | 150+ Journals Published with our assistance!';
-
-    } else if (msg.includes('how it works') || msg.includes('process') || msg.includes('steps')) {
-        return 'Want to know how CliEvi works? Visit: clievi.com/how-it-works-clievi.html to learn about our process and methodology!';
-
-    } else if (msg.includes('update') || msg.includes('news') || msg.includes('latest')) {
-        return 'Check our latest updates and research news at: clievi.com/latest.html. We regularly publish articles on clinical research and evidence-based medicine!';
-
-    } else if (msg.includes('privacy') || msg.includes('policy') || msg.includes('data protection')) {
-        return 'For our privacy policy and data protection information, visit: clievi.com/homepage/privacy-policy-clievi.html';
-
-    } else if (msg.includes('pico') || msg.includes('framework')) {
-        return 'We provide PICO (Patient, Intervention, Comparators, Outcome) Framework Assistance for structured research questions. Visit: clievi.com/services/medical-writing-and-research-support/pico-patient-intervention-comparators-outcome-framework-assistance.html';
-
-    } else if (msg.includes('prospero') || msg.includes('registration')) {
-        return 'We assist with PROSPERO Registration Services for systematic reviews. Visit: clievi.com/services/medical-writing-and-research-support/prospero-registration-services.html';
-
-    } else if (msg.includes('help') || msg.includes('options') || msg.includes('what can you do')) {
-        return 'I can help you with: services, rwe, clinical research, medical writing, statistics, contact, location, career, pricing, updates. Just type any topic!';
-
-    } else if (msg.includes('bye') || msg.includes('goodbye') || msg.includes('thank')) {
-        return 'Thank you for contacting CliEvi! For further assistance, email help@clievi.com or WhatsApp +44-772-183-3232. Have a great day!';
-
+        return '📍 *CliEvi Location:*\n\n9, Prescot St, London, United Kingdom\n\nWe serve clients in 30+ countries worldwide! 🌍';
+    } else if (msg.includes('career') || msg.includes('job')) {
+        return '💼 *Careers at CliEvi:*\n\nInterested in joining us?\nVisit: clievi.com/career.html\n\nWe are always looking for talented researchers!';
+    } else if (msg.includes('about') || msg.includes('who')) {
+        return 'ℹ️ *About CliEvi:*\n\n🏆 500+ Projects Delivered\n🌍 30+ Countries Served\n⭐ 5+ Years of Expertise\n📚 150+ Journals Published\n\nYour trusted partner in Evidence-Based Research!';
+    } else if (msg.includes('bye') || msg.includes('thank')) {
+        return 'Thank you for contacting CliEvi! 🙏\n\nFor further assistance:\n📧 help@clievi.com\n📞 +44-772-183-3232\n\nHave a great day! 😊';
+    } else if (msg.includes('help')) {
+        return '❓ *How can I help?*\n\nType any of these:\n\n• *services* - Our services\n• *rwe* - Real World Evidence\n• *clinical* - Clinical Research\n• *medical writing* - Medical Writing\n• *statistics* - Statistical Analysis\n• *price* - Pricing info\n• *contact* - Contact us\n• *about* - About CliEvi';
     } else {
-        return 'I am not sure about that. Please contact us directly at help@clievi.com or WhatsApp +44-772-183-3232. Type "help" to see what I can assist with!';
+        return 'Sorry, I did not understand! 😊\n\nType *help* to see what I can assist with!\n\nOr contact us directly:\n📧 help@clievi.com';
     }
 }
 
-app.get('/', function(req, res) {
+// ── Send WhatsApp Message ──────────────────────
+async function sendWhatsAppMessage(to, message) {
+    try {
+        await axios.post(
+            `https://graph.facebook.com/v22.0/${PHONE_ID}/messages`,
+            {
+                messaging_product: "whatsapp",
+                to: to,
+                type: "text",
+                text: { body: message }
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${TOKEN}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        console.log(`✅ Message sent to ${to}`);
+    } catch (error) {
+        console.log("❌ Error sending message:", error.message);
+    }
+}
+
+// ── Webhook Verify ─────────────────────────────
+app.get('/webhook', (req, res) => {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+
+    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+        console.log('✅ Webhook verified!');
+        res.status(200).send(challenge);
+    } else {
+        res.sendStatus(403);
+    }
+});
+
+// ── Webhook Receive Messages ───────────────────
+app.post('/webhook', async (req, res) => {
+    try {
+        const body = req.body;
+
+        if (body.object === 'whatsapp_business_account') {
+            const entry = body.entry[0];
+            const changes = entry.changes[0];
+            const value = changes.value;
+
+            if (value.messages && value.messages[0]) {
+                const message = value.messages[0];
+                const from = message.from;
+                const text = message.text ? message.text.body : '';
+
+                console.log(`📩 Message from ${from}: ${text}`);
+
+                const reply = getBotResponse(text);
+                await sendWhatsAppMessage(from, reply);
+            }
+        }
+        res.sendStatus(200);
+    } catch (error) {
+        console.log("❌ Webhook error:", error.message);
+        res.sendStatus(500);
+    }
+});
+
+// ── Website Chatbot ────────────────────────────
+app.get('/', (req, res) => {
     res.send(`
         <html>
         <head>
@@ -104,14 +129,13 @@ app.get('/', function(req, res) {
                 .user-msg { align-self: flex-end; background: #1A3C6E; color: white; padding: 10px 14px; border-radius: 18px 18px 4px 18px; max-width: 80%; font-size: 13px; line-height: 1.5; }
                 .bot-msg { align-self: flex-start; background: white; color: #333; padding: 10px 14px; border-radius: 18px 18px 18px 4px; max-width: 80%; font-size: 13px; line-height: 1.5; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
                 .quick-btns { display: flex; gap: 6px; padding: 10px 16px; flex-wrap: wrap; background: white; border-top: 1px solid #eee; }
-                .quick-btn { padding: 5px 10px; background: #EBF5FB; color: #1A3C6E; border: 1px solid #AED6F1; border-radius: 14px; cursor: pointer; font-size: 11px; white-space: nowrap; }
+                .quick-btn { padding: 5px 10px; background: #EBF5FB; color: #1A3C6E; border: 1px solid #AED6F1; border-radius: 14px; cursor: pointer; font-size: 11px; }
                 .quick-btn:hover { background: #D6EAF8; }
                 .chat-input { display: flex; padding: 12px 16px; gap: 8px; background: white; border-top: 1px solid #eee; }
                 #userInput { flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 22px; font-size: 13px; outline: none; }
                 #userInput:focus { border-color: #1A3C6E; }
                 button { padding: 10px 18px; background: #1A3C6E; color: white; border: none; border-radius: 22px; cursor: pointer; font-size: 13px; font-weight: bold; }
                 button:hover { background: #2471A3; }
-                .typing { align-self: flex-start; background: white; padding: 10px 14px; border-radius: 18px; font-size: 12px; color: #999; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
             </style>
         </head>
         <body>
@@ -124,15 +148,15 @@ app.get('/', function(req, res) {
                     </div>
                 </div>
                 <div id="chat">
-                    <div class="bot-msg">Hello! Welcome to CliEvi.com! I am your Clinical Research Assistant. How can I help you today?</div>
+                    <div class="bot-msg">Hello! Welcome to CliEvi.com! How can I help you today?</div>
                 </div>
                 <div class="quick-btns">
                     <span class="quick-btn" onclick="sendQuick('services')">📋 Services</span>
-                    <span class="quick-btn" onclick="sendQuick('rwe heor')">🔬 RWE & HEOR</span>
-                    <span class="quick-btn" onclick="sendQuick('clinical research')">🏥 Clinical Research</span>
-                    <span class="quick-btn" onclick="sendQuick('medical writing')">✍️ Medical Writing</span>
+                    <span class="quick-btn" onclick="sendQuick('rwe')">🔬 RWE</span>
+                    <span class="quick-btn" onclick="sendQuick('clinical')">🏥 Clinical</span>
+                    <span class="quick-btn" onclick="sendQuick('medical writing')">✍️ Writing</span>
                     <span class="quick-btn" onclick="sendQuick('contact')">📞 Contact</span>
-                    <span class="quick-btn" onclick="sendQuick('price')">💰 Pricing</span>
+                    <span class="quick-btn" onclick="sendQuick('price')">💰 Price</span>
                 </div>
                 <div class="chat-input">
                     <input type="text" id="userInput" placeholder="Ask about our services..." onkeypress="if(event.key==='Enter') sendMessage()"/>
@@ -148,17 +172,13 @@ app.get('/', function(req, res) {
                     chat.innerHTML += '<div class="user-msg">' + message + '</div>';
                     input.value = '';
                     chat.scrollTop = chat.scrollHeight;
-                    chat.innerHTML += '<div class="typing" id="typing">CliEvi is typing...</div>';
-                    chat.scrollTop = chat.scrollHeight;
-                    await new Promise(r => setTimeout(r, 800));
                     const response = await fetch('/chat', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ message: message })
                     });
                     const data = await response.json();
-                    document.getElementById('typing').remove();
-                    chat.innerHTML += '<div class="bot-msg">' + data.reply + '</div>';
+                    chat.innerHTML += '<div class="bot-msg">' + data.reply.replace(/\\n/g, '<br>') + '</div>';
                     chat.scrollTop = chat.scrollHeight;
                 }
                 function sendQuick(msg) {
@@ -171,16 +191,16 @@ app.get('/', function(req, res) {
     `);
 });
 
-app.post('/chat', function(req, res) {
+app.post('/chat', (req, res) => {
     const user_message = req.body.message;
     const reply = getBotResponse(user_message);
     res.json({ reply: reply });
 });
 
-app.listen(3000, function() {
+app.listen(3000, () => {
     console.log('================================');
     console.log('  CliEvi Chatbot Server Running!');
-    console.log('  Open: http://localhost:3000   ');
+    console.log('  Website: http://localhost:3000');
+    console.log('  Webhook: /webhook');
     console.log('================================');
 });
-
